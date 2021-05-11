@@ -1,0 +1,65 @@
+---
+  - hosts: rketest1
+
+    vars_files:
+      - ../vars/vars.yml   
+    
+    tasks:
+      - name: Get helm repo list
+        shell: "/usr/local/bin/helm repo list"
+        register: helmrepos
+        failed_when: helmrepos.rc > 1
+        changed_when: false
+        tags: gethelmrepolist
+
+      - name: Print helm repositories 
+        debug:
+          var: helmrepos.stdout
+        when: 
+          - helmrepos.stdout is search('traefik')
+        changed_when: false
+        tags: printhelmrepos
+
+      - name: Add repo to helm
+        shell: "/usr/local/bin/helm repo add traefik https://helm.traefik.io/traefik"
+        when: 
+          - helmrepos.stdout.find("traefik") == -1
+
+      - name: Update Helm Repo
+        shell: "/usr/local/bin/helm repo update"
+        when: 
+          - helmrepos.stdout.find("traefik") != -1
+
+      - name: Check list of deployments in traefik namespace 
+        shell: "/usr/local/bin/helm list -n {{ traefikns }}  -o yaml"
+        register: helmlist
+        changed_when: false
+        tags: listhelm
+
+      - name: Print list of helm deployments in traefik namespace 
+        debug:
+          var: helmlist
+        when:  
+          - helmlist.stdout.find("traefik") != -1
+        changed_when: false
+
+      - name: Deploy Traefik into cluster
+        shell: "/usr/local/bin/helm install traefik traefik/traefik --set service.externalIPs={'{{ traefikips }}'} -n {{ traefikns }} --create-namespace"
+        when: 
+          - helmlist.stdout.find("traefik") == -1
+
+      - name: create Traefik dashboard yml for deployment
+        template:
+          src: ../tmpl/dashboard.j2
+          dest: "/home/{{ ansible_user }}/rke/dashboard.yml"
+          backup: 'yes'
+          owner: "{{ ansible_user }}"
+          group: "{{ ansible_user }}"
+          mode: 0755
+        register: dashtempl
+        tags: dashtempl
+
+      - name: Deploy Traefik dashboard
+        shell: "/usr/local/bin/kubectl apply -f /home/{{ ansible_user }}/rke/dashboard.yml"
+        when: dashtempl.changed
+        tags: dashdeploy

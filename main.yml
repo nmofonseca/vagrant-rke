@@ -1,0 +1,33 @@
+---
+- hosts: rkecl
+  become: yes
+   
+  vars_files:
+    - vars/vars.yml    
+
+  handlers:
+    - import_tasks: handlers/handlers.yml
+
+  tasks:
+    - name: Update yum packages
+      yum:
+        name: "*"
+        state: latest
+        exclude:
+          - docker-ce
+          - docker-ce-cli
+      register: yumupdateout
+
+    - name: Print yum update output
+      debug:
+        var: yumupdateout
+    - name: enable firewalld to allows us to manage ports
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+    
+    - import_tasks: tasks/prepare_4rke.yml
+    - import_tasks: tasks/docker_install.yml
+    - import_tasks: tasks/rke_deploy.yml
+- import_playbook: playbooks/traefik.yml

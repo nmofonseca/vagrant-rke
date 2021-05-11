@@ -1,0 +1,45 @@
+---
+  - hosts: rketest1
+    become: 'yes'
+    become_user: "{{ ansible_user }}"
+    gather_facts: 'no'
+
+    vars_files:
+      - ../vars/vars.yml
+    
+    tasks:
+
+    - name: Check if cluster exists
+      stat:
+        path: "/home/{{ ansible_user }}/rke/cluster.rkestate"
+      register: rkestate
+      tags: checkrke
+    
+    - name: Check if traefik is installed
+      shell: "helm list -A"
+      register: helmlist
+      changed_when: false
+      when: rkestate.stat.exists
+      tags: checkhelm
+
+    - name: uninstall traefik
+      shell: "kubectl delete ns {{ traefikns }}"
+      when: 
+        - rkestate.stat.exists
+        - helmlist.stdout.find("traefik") != -1 
+      tags: traefikrm
+    
+
+    - name: delete rke cluster
+      shell: "/usr/local/bin/rke -d remove --force > /tmp/rm_rke.log"
+      args:
+        chdir: "/home/{{ ansible_user }}/rke"
+      when: rkestate.stat.exists
+      tags: delrke
+    
+    - name: remove kubeconfig from .kube
+      file:
+        path: "/home/{{ ansible_user }}/.kube/config"
+      when: rkestate.stat.exists
+      tags: delkconf
+    

@@ -1,0 +1,54 @@
+---
+   # Enable TCPForward since RKE installed needs this, this can be checked on https://rancher.com/docs/rke/latest/en/os/
+    - name: Allow Tcp Forwarding on sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#AllowTcpForwarding yes'
+        line: 'AllowTcpForwarding yes'
+      notify: restart sshd
+    
+    # Load the required Kernel modules, this can be checked on https://rancher.com/docs/rke/latest/en/os/
+    - name: Load required kernel modules for RKE
+      modprobe:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ kernel_modules }}"
+
+    - name: Disable swap since K8s doesn't work with swap
+      shell: "swapoff -a"
+    
+    - name: Disable Swap in fstab since K8's doesn't work with  swap
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+.*)$'
+        replace: '# \1'
+    
+    - name: Modify sysctl entries for RKE
+      sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+      loop: "{{ sysctl_entries }}"
+
+    - name: Open firewall required ports
+      #firewalld:
+      ansible.posix.firewalld:
+        port: "{{item.port}}"
+        state: "{{item.state}}"
+        immediate: yes
+        permanent: yes
+      loop: "{{ fw_ports }}"
+      tags: fwports
+
+    - name: Enable firewalld masquerade
+      #firewalld:
+      ansible.posix.firewalld:
+        masquerade: "yes"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      tags: fwmasq
+
+    # Force the restart to run now before the playbook finishes
+    - meta: flush_handlers

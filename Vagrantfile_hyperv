@@ -1,0 +1,52 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+ # General Vagrant VM configuration.
+    if Vagrant.has_plugin?("vagrant-proxyconf")
+        config.proxy.http     = "http://10.71.16.7:8008/"
+        config.proxy.https    = "http://10.71.16.7:8008/"
+        config.proxy.no_proxy = "localhost,127.0.0.1,*.internal.towerswatson.com"
+    end
+    config.vm.box = "centos/7"
+    config.ssh.insert_key = false
+    config.vm.synced_folder ".", "/vagrant"
+    config.vm.provision "ansible_local" do |ansible|
+        #ansible.verbose =  "v"
+        ansible.galaxy_command = "sudo ansible-galaxy collection install ansible.posix"
+        ansible.playbook = "/vagrant/main.yml"
+        #ansible.install_mode = "pip"
+        #ansible.pip_install_cmd = "https_proxy=http://10.71.16.7:8008 curl -s https://bootstrap.pypa.io/get-pip.py | sudo https_proxy=http://10.71.16.7:8008 python"
+        #ansible.version = "2.10"
+    end
+
+    # rketest servers specification section
+    config.vm.define "rketest1" do |rke|
+        rke.vm.hostname = "rketest1"
+        #rke.vm.network "private_network", ip: "192.168.60.4"
+        rke.vm.provider :hyperv do |v|
+            v.memory = 6144
+            v.linked_clone = true
+        end
+    end
+
+#    config.vm.define "rketest2" do |rke|
+#        rke.vm.hostname = "rketest2"
+#        rke.vm.network "private_network", ip: "192.168.60.5"
+#        rke.vm.provider :virtualbox do |v|
+#            v.memory = 4096
+#            v.linked_clone = true
+#        end
+#    end
+#
+#    config.vm.define "rketest3" do |rke|
+#        rke.vm.hostname = "rketest3"
+#        rke.vm.network "private_network", ip: "192.168.60.6"
+#        rke.vm.provider :virtualbox do |v|
+#            v.memory = 4096
+#            v.linked_clone = true
+#        end
+#    end
+end

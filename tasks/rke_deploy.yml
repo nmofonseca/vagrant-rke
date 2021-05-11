@@ -1,0 +1,97 @@
+---
+    - name: Get RKE from rancher for RKE deployment
+      get_url:
+        url: "https://github.com/rancher/rke/releases/download/{{ rke_version }}/rke_linux-amd64"
+        dest: /usr/local/bin/rke
+        mode: 0755
+        force: no
+      when: ('rketest1' in inventory_hostname)
+    
+    - name: Get Kubectl for testing and cluster management
+      get_url: 
+        url: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: 0755
+        force: no
+      when: ('rketest1' in inventory_hostname)
+
+    - name: Create rke folder for rkecluster deployment
+      file:
+        path: "/home/{{ ansible_user }}/rke"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        state: directory
+      when: ('rketest1' in inventory_hostname)
+
+    - name: create cluster.yml based on template
+      template:
+        src: tmpl/cluster.j2
+        dest: "/home/{{ ansible_user }}/rke/cluster.yml"
+        backup: yes
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+      when: ('rketest1' in inventory_hostname)
+      tags: clustertemplate
+      
+    - name: deploy rke_version
+      shell: /usr/local/bin/rke -d up > rkedeploy.log
+      args:
+        chdir: "/home/{{ ansible_user }}/rke"
+        creates: kube_config_cluster.yml
+      when: ('rketest1' in inventory_hostname)
+      become_user: "{{ ansible_user }}"
+      tags: rkedeploy
+
+    - name: Create default .kube folder under user home
+      file:
+        path: "/home/{{ ansible_user }}/.kube"
+        state: directory
+      when: ('rketest1' in inventory_hostname) 
+      tags: kubedir
+
+    - name: Add kubeconfig to .kube/config
+      copy:
+        src: "/home/{{ ansible_user }}/rke/kube_config_cluster.yml"
+        remote_src: yes
+        dest: "/home/{{ ansible_user }}/.kube/config"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+      when: ('rketest1' in inventory_hostname) 
+      tags: kubeconf
+    
+    - name: Get helm installation script
+      get_url: 
+        url: "https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3"
+        dest: /home/{{ ansible_user }}/rke/get_helm.sh
+        mode: 0777
+        force: no
+      become_user: "{{ ansible_user }}"
+      when: ('rketest1' in inventory_hostname) 
+      tags: gethelm
+
+    - name: Install helm
+      shell: 
+        cmd: ./get_helm.sh
+        chdir: "/home/{{ ansible_user }}/rke"
+        creates: /usr/local/bin/helm
+      when: ('rketest1' in inventory_hostname) 
+      tags: insthelm
+
+    - name: Pause for a short time to wait for the cluster to be ready # In Vm's on my laptop thing were slower then in a real cluster
+      pause:
+        seconds: 60
+
+    - name: Get list of pods after RKE deployment
+      shell: "/usr/local/bin/kubectl get pods -A"
+      become_user: "{{ ansible_user }}"
+      register: rkepods
+      when: ('rketest1' in inventory_hostname)
+      changed_when: false
+      tags: getpods 
+
+    - name: Print list of pods after RKE deployment
+      debug:
+        var: rkepods
+      when: ('rketest1' in inventory_hostname) 
+      tags: listpods

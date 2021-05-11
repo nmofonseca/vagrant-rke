@@ -1,0 +1,77 @@
+---
+#  Generic Section
+docker_version: "20.10" # Change this to specify the docker version
+priv_ssh_key: "privkey" # Change this value to match your private ssh key for ansible playbook run
+pub_ssh_key: "pubkey.pub" # Change this to your public ssh key for ansible and rke provisioning
+rke_version: "v1.2.6" # Version of RKE binary to be downloads, release page: https://github.com/rancher/rke/releases/
+kubectl_version: "v1.20.0" # Version of kubectl to be downloaded
+k8s_version: "v1.20.4-rancher1-1" # K8s system_image version, this will be used by rke to download the required images to deploy k8s
+serverlist: "{{ groups['rkecl'] }}"
+# Variables for rke cluster template
+clustername: rkelocal
+nic: eth1
+job_timeout: "300" # Timeout value for the cluster.yml that rke will use for plugin job deployment timeout
+# Variables for traefik deployment
+traefikns: traefik
+traefikips: "192.168.60.4,192.168.60.5"
+dashmatchrule: "Host(`rkelocal.test`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))"
+tlsb64crt: 
+# Variables for Os setup as pre-requirements
+sysctl_entries:
+  - {key: net.bridge.bridge-nf-call-ip6tables, value: 1}
+  - {key: net.bridge.bridge-nf-call-iptables,  value: 1}
+  - {key: net.ipv4.ip_forward,  value: 1}
+fw_ports:
+  - { port : '22/tcp', state: 'enabled' }
+  - { port : '80/tcp', state: 'enabled' }
+  - { port : '443/tcp', state: 'enabled' }
+  - { port : '179/tcp', state: 'enabled' }
+  - { port : '5473/tcp', state: 'enabled' }
+  - { port : '6443/tcp', state: 'enabled' }
+  - { port : '8472/tcp', state: 'enabled' }
+  - { port : '2376/tcp', state: 'enabled' }
+  - { port : '2379-2380/tcp', state: 'enabled' }
+  - { port : '9099/tcp', state: 'enabled' }
+  - { port : '10250/tcp', state: 'enabled' }
+  - { port : '10251/tcp', state: 'enabled' }
+  - { port : '10252/tcp', state: 'enabled' }
+  - { port : '10254/tcp', state: 'enabled' }
+  - { port : '30000-32767/tcp', state: 'enabled' }
+  - { port : '9000/tcp', state: 'enabled' }
+  - { port : '8285/udp', state: 'enabled' }
+  - { port : '8472/udp', state: 'enabled' }
+  - { port : '4789/udp', state: 'enabled' }
+  - { port : '30000-32767/udp', state: 'enabled' }
+  - { port : '6379/tcp', state: 'enabled' }
+kernel_modules:
+  - br_netfilter
+  - ip6_udp_tunnel
+  - ip_set
+  - ip_set_hash_ip
+  - ip_set_hash_net
+  - iptable_filter
+  - iptable_nat
+  - iptable_mangle
+  - iptable_raw
+  - nf_conntrack_netlink
+  - nf_conntrack
+  - nf_conntrack_ipv4
+  - nf_defrag_ipv4
+  - nf_nat
+  - nf_nat_ipv4
+  - nf_nat_masquerade_ipv4
+  - nfnetlink
+  - udp_tunnel
+  - veth
+  - vxlan
+  - x_tables
+  - xt_addrtype
+  - xt_conntrack
+  - xt_comment
+  - xt_mark
+  - xt_multiport
+  - xt_nat
+  - xt_recent
+  - xt_set
+  - xt_statistic
+  - xt_tcpudp

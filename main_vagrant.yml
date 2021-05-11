@@ -1,0 +1,14 @@
+---
+  - hosts: all
+    become: yes
+    
+    vars_files:
+      - vars/vars.yml    
+    tasks:
+    - name: add my public key to the authorized-keys file for vagrant user
+      ##ansible.posix.authorized_key: only works this on ansible 2.10
+      authorized_key:
+        user: "vagrant"
+        state: present
+        manage_dir: yes
+        key: "{{ lookup('file', '{{ pub_ssh_key }}') }}"

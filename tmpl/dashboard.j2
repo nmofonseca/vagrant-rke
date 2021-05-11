@@ -1,0 +1,15 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+  namespace: "{{ traefikns }}"
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: "{{ dashmatchrule }}"
+      kind: Rule
+      services:
+        - name: api@internal
+          kind: TraefikService

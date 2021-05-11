@@ -1,0 +1,52 @@
+---
+    # Check if docker is present or not
+    - name: Check if docker-ce is installed
+      package_facts:
+        manager: auto
+    - name: Check if docker is not present
+      debug:
+        msg: "docker-ce is not installed"
+      when: "'docker-ce' not in ansible_facts.packages"
+    - name: Check if docker is present
+      debug:
+        msg: "docker-ce is installed"
+      when: "'docker-ce' in ansible_facts.packages"
+
+# This play will install docker community using Rancher own version of the scripts, versions can be seen here
+# https://github.com/rancher/install-docker
+    - name: Get docker install script using Rancher version of it
+      get_url:
+        url: "https://releases.rancher.com/install-docker/{{ docker_version }}.sh"
+        dest: "/home/{{ ansible_user }}/install_docker_{{ docker_version }}.sh"
+        force: yes
+        mode: u+rwx
+      when: "'docker-ce' not in ansible_facts.packages"
+      tags: getdockerinst
+    # Install docker using the downloaded script
+    - name: Install docker using the rancher script
+      shell: "/bin/sh /home/{{ ansible_user }}/install_docker_{{ docker_version }}.sh"
+      when: "'docker-ce' not in ansible_facts.packages"
+      tags: instdocker
+    - name: Enable docker service
+      service:
+        name: docker
+        enabled: yes
+      tags: enabledocker
+      
+    # Add user to docker group e.g vagrant
+    - name: Add user to group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+      when: "'docker-ce' not in ansible_facts.packages"
+      tags:
+        - groupadd
+
+    - name: Delete docker installation script
+      file:
+        path: "/home/{{ ansible_user }}/install_docker_{{ docker_version }}.sh"
+        state: absent
+      when: "'docker-ce' not in ansible_facts.packages"
+      changed_when: false
+  

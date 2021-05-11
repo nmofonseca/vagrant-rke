@@ -1,0 +1,125 @@
+# If you intened to deploy Kubernetes in an air-gapped environment,
+# please consult the documentation on how to configure custom RKE images.
+nodes:
+{% for node in serverlist %}
+- address: {{ node }}
+  port: "22"
+  internal_address: {{ node }}
+  role:
+  - controlplane
+  - worker
+  - etcd
+  hostname_override: {{ node }}
+  user: vagrant
+  docker_socket: /var/run/docker.sock
+  ssh_key: ""
+  ssh_key_path: /vagrant/{{ priv_ssh_key }}
+  ssh_cert: ""
+  ssh_cert_path: ""
+  labels: {}
+  taints: []
+{% endfor %}
+services:
+  etcd:
+    image: ""
+    extra_args: {}
+    extra_binds: []
+    extra_env: []
+    win_extra_args: {}
+    win_extra_binds: []
+    win_extra_env: []
+    external_urls: []
+    ca_cert: ""
+    cert: ""
+    key: ""
+    path: ""
+    uid: 0
+    gid: 0
+    snapshot: null
+    retention: ""
+    creation: ""
+    backup_config: 
+      interval_hours: 12
+      retention: 6
+  kube-api:
+    image: ""
+    extra_args: {}
+    extra_binds: []
+    extra_env: []
+    win_extra_args: {}
+    win_extra_binds: []
+    win_extra_env: []
+    service_cluster_ip_range: 10.43.0.0/16
+    service_node_port_range: ""
+    pod_security_policy: false
+    always_pull_images: false
+    secrets_encryption_config: null
+    audit_log: null
+    admission_configuration: null
+    event_rate_limit: null
+  kube-controller:
+    image: ""
+    extra_args: {}
+    extra_binds: []
+    extra_env: []
+    win_extra_args: {}
+    win_extra_binds: []
+    win_extra_env: []
+    cluster_cidr: 10.42.0.0/16
+    service_cluster_ip_range: 10.43.0.0/16
+  scheduler:
+    image: ""
+    extra_args: {}
+    extra_binds: []
+    extra_env: []
+    win_extra_args: {}
+    win_extra_binds: []
+    win_extra_env: []
+  kubelet:
+    image: ""
+    extra_args: {}
+    extra_binds: []
+    extra_env: []
+    win_extra_args: {}
+    win_extra_binds: []
+    win_extra_env: []
+    cluster_domain: cluster.local
+    infra_container_image: ""
+    cluster_dns_server: 10.43.0.10
+    fail_swap_on: false
+    generate_serving_certificate: false
+  kubeproxy:
+    image: ""
+    extra_args: {}
+    extra_binds: []
+    extra_env: []
+    win_extra_args: {}
+    win_extra_binds: []
+    win_extra_env: []
+network:
+  plugin: canal
+  options:
+    canal_iface: {{ nic }}
+  mtu: 0
+  node_selector: {}
+  update_strategy: null
+  tolerations: []
+authentication:
+  strategy: x509
+  sans: []
+  webhook: null
+addons: ""
+addons_include: []
+ssh_key_path: /vagrant/{{ priv_ssh_key }}
+ssh_cert_path: ""
+ssh_agent_auth: false
+authorization:
+  mode: rbac
+  options: {}
+ignore_docker_version: null
+kubernetes_version: {{ k8s_version }}
+private_registries: []
+cluster_name: {{ clustername }}
+addon_job_timeout: {{ job_timeout }}
+ingress:
+  provider: none
