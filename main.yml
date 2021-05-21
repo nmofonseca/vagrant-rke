@@ -30,4 +30,4 @@
     - import_tasks: tasks/prepare_4rke.yml
     - import_tasks: tasks/docker_install.yml
     - import_tasks: tasks/rke_deploy.yml
-- import_playbook: playbooks/traefik.yml
+- import_playbook: playbooks/traefik_deploy.yml
