@@ -7,10 +7,10 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
      # General Vagrant VM configuration.
     if Vagrant.has_plugin?("vagrant-proxyconf")
-        #config.proxy.http     = "http://ip:port/"
-        #config.proxy.https    = "http://ip:port/"
-        #config.proxy.no_proxy = "localhost,127.0.0.1,192.168.60.4,192.168.60.5,rketest1,rketest2"
-        config.proxy.enabled = false # Uncomment only this line to disable the plugin
+        config.proxy.http     = "http://10.71.16.7:8008"
+        config.proxy.https    = "http://10.71.16.7:8008"
+        config.proxy.no_proxy = "localhost,127.0.0.1,192.168.60.4,192.168.60.5,rketest1,rketest2"
+        #config.proxy.enabled = false # Uncomment only this line to disable the plugin
     end
     if Vagrant.has_plugin?("vagrant-vbguest")
         config.vbguest.installer_options = { allow_kernel_upgrade: true } #this is needed for the vbguest plugin uncomment if you need it

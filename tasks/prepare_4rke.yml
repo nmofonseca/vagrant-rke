@@ -13,6 +13,7 @@
         name: "{{ item }}"
         state: present
       loop: "{{ kernel_modules }}"
+      tags: kernelmod
 
     - name: Disable swap since K8s doesn't work with swap
       shell: "swapoff -a"
