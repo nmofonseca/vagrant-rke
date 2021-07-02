@@ -92,6 +92,6 @@
 
     - name: Print list of pods after RKE deployment
       debug:
-        var: rkepods
+        var: rkepods.stdout_lines
       when: ('rketest1' in inventory_hostname) 
       tags: listpods
